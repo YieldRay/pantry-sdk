@@ -1,0 +1,14 @@
+{
+    "name": "pantry-sdk",
+    "type": "module",
+    "version": "0.1.1",
+    "description": "Pantry is a free service that provides perishable data storage for small projects",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "tsc"
+    },
+    "types": "./dist/index.d.ts",
+    "keywords": [],
+    "author": "YieldRay",
+    "license": "MIT"
+}
