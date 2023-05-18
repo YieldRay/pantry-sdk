@@ -9,6 +9,8 @@ works in both node and deno
 
 ```js
 import Pantry from "pantry-sdk";
+// if you are using deno, add `npm:` specifiers
+import Pantry from "npm:pantry-sdk";
 
 const client = new Pantry("xxxx-xxxx-xxxx-xxxx-xxxx-xxxx");
 
