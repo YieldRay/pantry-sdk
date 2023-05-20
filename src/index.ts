@@ -1,16 +1,26 @@
 // deno-lint-ignore-file no-explicit-any
+type ObjectNotArray<T extends object = object> = T extends unknown[] ? never : T;
+
+type PrimitiveValue = string | number | boolean | undefined | null;
+
+type ArrayValue = Array<PrimitiveValue | ObjectValue>;
+
+type ObjectValue = {
+    [key: string]: PrimitiveValue | ObjectValue | ArrayValue;
+};
+
+type BodyValue<StrictMode extends boolean> = ObjectNotArray<StrictMode extends true ? ObjectValue : object>;
+
 interface Details {
     name: string;
     description: string;
     errors: string[];
     notifications: boolean;
     percentFull: number;
-    baskets: Basket[];
-}
-
-interface Basket {
-    name: string;
-    ttl: number;
+    baskets: Array<{
+        name: string;
+        ttl: number;
+    }>;
 }
 
 /**
@@ -18,13 +28,14 @@ interface Basket {
 
  * It was built to provide a simple, re-usable storage solution for smaller sized projects. It was created by developers for developers, to be there when you need it and to help you rapidly prototype your next project.
  */
-export default class Pantry {
+export default class Pantry<StrictMode extends boolean = false> {
     #pantryID: string;
     #fetch: typeof globalThis.fetch;
     constructor(pantryID: string, fetch?: typeof globalThis.fetch) {
         this.#pantryID = pantryID;
         this.#fetch = fetch || globalThis.fetch;
     }
+
     get #fetchJSON() {
         return async <T>(input: RequestInfo | URL, init?: RequestInit | undefined) => {
             const res = await this.#fetch(input, init);
@@ -60,7 +71,10 @@ export default class Pantry {
     /**
      * Given a basket name as provided in the url, this will either create a new basket inside your pantry, or replace an existing one.
      */
-    async createBasket<T = any>(basketName: string, body: T): Promise<T> {
+    async createBasket<Name extends string>(
+        basketName: Name,
+        body: BodyValue<StrictMode>
+    ): Promise<`Your Pantry was updated with basket: ${Name}!`> {
         return await this.#fetchJSON(`https://getpantry.cloud/apiv1/pantry/${this.#pantryID}/basket/${basketName}`, {
             method: "POST",
             headers: {
@@ -73,7 +87,10 @@ export default class Pantry {
     /**
      * Given a basket name, this will update the existing contents and return the contents of the newly updated basket. This operation performs a deep merge and will overwrite the values of any existing keys, or append values to nested objects or arrays.
      */
-    async updateBasket<T = any>(basketName: string, body: T): Promise<T> {
+    async updateBasket<Out extends BodyValue<StrictMode>>(
+        basketName: string,
+        body: BodyValue<StrictMode>
+    ): Promise<Out> {
         return await this.#fetchJSON(`https://getpantry.cloud/apiv1/pantry/${this.#pantryID}/basket/${basketName}`, {
             method: "PUT",
             headers: {
@@ -86,7 +103,7 @@ export default class Pantry {
     /**
      * Given a basket name, return the full contents of the basket.
      */
-    async getBasket<T = any>(basketName: string): Promise<T> {
+    async getBasket<Out extends BodyValue<StrictMode>>(basketName: string): Promise<ObjectNotArray<Out>> {
         return await this.#fetchJSON(`https://getpantry.cloud/apiv1/pantry/${this.#pantryID}/basket/${basketName}`, {
             headers: {
                 "Content-Type": "application/json",
@@ -97,7 +114,7 @@ export default class Pantry {
     /**
      * Delete the entire basket. Warning, this action cannot be undone.
      */
-    async deleteBasket(basketName: string): Promise<string> {
+    async deleteBasket<Name extends string>(basketName: Name): Promise<`${Name} was removed from your Pantry!`> {
         return await this.#fetchJSON(`https://getpantry.cloud/apiv1/pantry/${this.#pantryID}/basket/${basketName}`, {
             method: "DELETE",
             headers: {
@@ -106,12 +123,13 @@ export default class Pantry {
         });
     }
 
-    useBasket(basketName: string) {
+    useBasket<Name extends string>(basketName: Name) {
         return {
-            create: <T>(body: T) => this.createBasket(basketName, body),
-            update: <T>(body: T) => this.updateBasket(basketName, body),
-            delete: () => this.deleteBasket(basketName),
-            get: () => this.getBasket(basketName),
+            create: (body: BodyValue<StrictMode>) => this.createBasket<Name>(basketName, body),
+            delete: () => this.deleteBasket<Name>(basketName),
+            update: <Out extends BodyValue<StrictMode>>(body: BodyValue<StrictMode>) =>
+                this.updateBasket<Out>(basketName, body),
+            get: <Out extends BodyValue<StrictMode>>() => this.getBasket<Out>(basketName),
         };
     }
 }
