@@ -37,8 +37,9 @@ export default class Pantry<StrictMode extends boolean = false> {
     }
 
     get #fetchJSON() {
+        const fetch = this.#fetch;
         return async <T>(input: RequestInfo | URL, init?: RequestInit | undefined) => {
-            const res = await this.#fetch(input, init);
+            const res = await fetch(input, init);
             if (res.ok) {
                 if (res.headers.get("content-type")?.startsWith("application/json")) {
                     return (await res.json()) as T;
