@@ -10,5 +10,13 @@
     "types": "./dist/index.d.ts",
     "keywords": [],
     "author": "YieldRay",
-    "license": "MIT"
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/YieldRay/pantry-sdk.git"
+    },
+    "bugs": {
+        "url": "https://github.com/YieldRay/pantry-sdk/issues"
+    },
+    "homepage": "https://github.com/YieldRay/pantry-sdk#readme"
 }

@@ -13,6 +13,8 @@ First, import the library
 import Pantry from "pantry-sdk";
 // if you are using deno, add `npm:` specifier
 import Pantry from "npm:pantry-sdk";
+// you may want import via url
+import Pantry from "https://unpkg.com/pantry-sdk@latest/dist/index.js";
 ```
 
 Second, initialize the object with PantryID
