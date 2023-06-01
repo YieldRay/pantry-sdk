@@ -23,6 +23,17 @@ interface Details {
     }>;
 }
 
+export class BasketNotExistError extends Error {
+    get basketName() {
+        return this.#getBasketName();
+    }
+    #getBasketName: () => string;
+    constructor(message: string) {
+        super(message);
+        this.#getBasketName = () => /Could not \w+ basket: (.+) does not exist/.exec(message)![1];
+    }
+}
+
 /**
  * Pantry is a free service that provides perishable data storage for small projects. Data is securely stored for as long as you and your users need it and is deleted after a period of inactivity. Simply use the restful API to post JSON objects and we'll take care of the rest.
 
@@ -52,6 +63,26 @@ export default class Pantry<StrictMode extends boolean = false> {
         };
     }
 
+    async #fetchBasket<T>(basketName: string, method: string = "GET", body?: object) {
+        try {
+            return await this.#fetchJSON<T>(
+                `https://getpantry.cloud/apiv1/pantry/${this.#pantryID}/basket/${basketName}`,
+                {
+                    method,
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: method !== "GET" && method !== "HEAD" ? JSON.stringify(body) : undefined,
+                }
+            );
+        } catch (e) {
+            if (e instanceof Error && e.message.startsWith("Could not") && e.message.endsWith("does not exist")) {
+                throw new BasketNotExistError(e.message);
+            }
+            throw e;
+        }
+    }
+
     /**
      * Given a PantryID, return the details of the pantry, including a list of baskets currently stored inside it.
      */
@@ -76,13 +107,7 @@ export default class Pantry<StrictMode extends boolean = false> {
         basketName: Name,
         body: BodyValue<StrictMode>
     ): Promise<`Your Pantry was updated with basket: ${Name}!`> {
-        return await this.#fetchJSON(`https://getpantry.cloud/apiv1/pantry/${this.#pantryID}/basket/${basketName}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(body),
-        });
+        return await this.#fetchBasket(basketName, "POST", body);
     }
 
     /**
@@ -92,36 +117,21 @@ export default class Pantry<StrictMode extends boolean = false> {
         basketName: string,
         body: BodyValue<StrictMode>
     ): Promise<Out> {
-        return await this.#fetchJSON(`https://getpantry.cloud/apiv1/pantry/${this.#pantryID}/basket/${basketName}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(body),
-        });
+        return await this.#fetchBasket(basketName, "PUT", body);
     }
 
     /**
      * Given a basket name, return the full contents of the basket.
      */
     async getBasket<Out extends BodyValue<StrictMode>>(basketName: string): Promise<ObjectNotArray<Out>> {
-        return await this.#fetchJSON(`https://getpantry.cloud/apiv1/pantry/${this.#pantryID}/basket/${basketName}`, {
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
+        return await this.#fetchBasket(basketName);
     }
 
     /**
      * Delete the entire basket. Warning, this action cannot be undone.
      */
     async deleteBasket<Name extends string>(basketName: Name): Promise<`${Name} was removed from your Pantry!`> {
-        return await this.#fetchJSON(`https://getpantry.cloud/apiv1/pantry/${this.#pantryID}/basket/${basketName}`, {
-            method: "DELETE",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
+        return await this.#fetchBasket(basketName, "DELETE");
     }
 
     useBasket<Name extends string>(basketName: Name) {
