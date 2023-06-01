@@ -24,6 +24,7 @@ interface Details {
 }
 
 export class BasketNotExistError extends Error {
+    name = "BasketNotExistError"; // new.target.name
     get basketName() {
         return this.#getBasketName();
     }
@@ -78,8 +79,9 @@ export default class Pantry<StrictMode extends boolean = false> {
         } catch (e) {
             if (e instanceof Error && e.message.startsWith("Could not") && e.message.endsWith("does not exist")) {
                 throw new BasketNotExistError(e.message);
+            } else {
+                throw e;
             }
-            throw e;
         }
     }
 
