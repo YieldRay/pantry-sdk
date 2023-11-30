@@ -31,7 +31,7 @@ export class BasketNotExistError extends Error {
     #getBasketName: () => string;
     constructor(message: string) {
         super(message);
-        this.#getBasketName = () => /Could not \w+ basket: (.+) does not exist/.exec(message)![1];
+        this.#getBasketName = () => /Could not \w+ basket: (.+) does not exist/.exec(message)?.[1] || message;
     }
 }
 
@@ -67,7 +67,7 @@ export default class Pantry<StrictMode extends boolean = false> {
     async #fetchBasket<T>(basketName: string, method: string = "GET", body?: object) {
         try {
             return await this.#fetchJSON<T>(
-                `https://getpantry.cloud/apiv1/pantry/${this.#pantryID}/basket/${basketName}`,
+                `https://getpantry.cloud/apiv1/pantry/${this.#pantryID}/basket/${encodeURIComponent(basketName)}`,
                 {
                     method,
                     headers: {
