@@ -3,7 +3,7 @@ type ObjectNotArray<T extends object = object> = T extends unknown[] ? never : T
 
 type PrimitiveValue = string | number | boolean | undefined | null;
 
-type ArrayValue = Array<PrimitiveValue | ObjectValue>;
+type ArrayValue = Array<PrimitiveValue | ObjectValue | ArrayValue>;
 
 type ObjectValue = {
     [key: string]: PrimitiveValue | ObjectValue | ArrayValue;
