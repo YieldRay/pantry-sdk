@@ -1,27 +1,4 @@
-// deno-lint-ignore-file no-explicit-any
-type ObjectNotArray<T extends object = object> = T extends unknown[] ? never : T;
-
-type PrimitiveValue = string | number | boolean | undefined | null;
-
-type ArrayValue = Array<PrimitiveValue | ObjectValue | ArrayValue>;
-
-type ObjectValue = {
-    [key: string]: PrimitiveValue | ObjectValue | ArrayValue;
-};
-
-type BodyValue<StrictMode extends boolean> = ObjectNotArray<StrictMode extends true ? ObjectValue : object>;
-
-interface Details {
-    name: string;
-    description: string;
-    errors: string[];
-    notifications: boolean;
-    percentFull: number;
-    baskets: Array<{
-        name: string;
-        ttl: number;
-    }>;
-}
+import { BodyValue, Details, ObjectNotArray } from "./types";
 
 export class BasketNotExistError extends Error {
     name = "BasketNotExistError"; // new.target.name
